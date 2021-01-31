@@ -1,0 +1,12 @@
+{
+  "name": "sushi-night",
+  "displayName": "sushi-night",
+  "expo": {
+    "name": "sushi-night",
+    "slug": "sushi-night",
+    "version": "1.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  }
+}
