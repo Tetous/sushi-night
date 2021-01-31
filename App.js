@@ -1,14 +1,16 @@
 import React from "react";
-import { Provider as PaperProvider } from "react-native-paper";
 import { Routes } from "./src/routes";
 import { AuthProvider } from "./src/providers/AuthProvider";
+import { Provider as PaperProvider } from "react-native-paper";
 
-export default App = () => {
+const App = () => {
   return (
-    <AuthProvider>
-      <PaperProvider>
+    <PaperProvider>
+      <AuthProvider>
         <Routes />
-      </PaperProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </PaperProvider>
   );
-}
+};
+
+export default App;

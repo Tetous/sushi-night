@@ -1,9 +1,9 @@
 import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
-import { Badge, Avatar } from "react-native-paper";
-import { formatMediaListEpisodes } from "../util";
+import { Badge, Avatar} from "react-native-paper";
+import { formatEpisodes } from "../util";
 
 export const EntryAnimePoster = ({ Entry, onPress }) => {
-  const episodes = formatMediaListEpisodes(Entry.anime);
+  const episodes = formatEpisodes(Entry.anime);
   const coverImgUrl = Entry.anime.media.coverImage.extraLarge || "";
   const title = Entry.anime.media.title.userPreferred || "";
 
@@ -18,7 +18,7 @@ export const EntryAnimePoster = ({ Entry, onPress }) => {
             source={{ uri: coverImgUrl }}
             style={styles.pvAnimeImage}
           />
-          <Badge visible={true} style={{ position: "absolute" }}>
+          <Badge style={{ position: "absolute" }}>
             {episodes}
           </Badge>
         </View>

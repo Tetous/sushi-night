@@ -1,39 +1,52 @@
-import React, { useContext, FC, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { createStackNavigator } from "@react-navigation/stack";
 import { Center } from "../components/Center";
-import { Text, TouchableOpacity, FlatList, Button } from "react-native";
+import { FlatList, TouchableOpacity} from "react-native";
 import { MediaListStatus } from "anilist-wrapper";
 import { AuthContext } from "../providers/AuthProvider";
-import { ActivityIndicator } from "react-native-paper";
 import { EntryAnimePoster } from "../components/AnimePoster";
+import { Text, ActivityIndicator, RadioButton } from "react-native-paper";
 
 const Stack = createStackNavigator();
 
 const Feed = ({ navigation }) => {
   const { client, user } = useContext(AuthContext);
-
+  const [expanded, setExpanded] = useState(false);
   var fetching = true;
   var error = null;
 
-  var filter = MediaListStatus.Current;
-  var filteredList = [];
+  var lists = [];
+  var [animeWatching, animeCompleted, animeDropped, animePaused] = lists;
+  var filteredList = null;
+
+  const handlePress = () => {
+    setExpanded(!expanded); 
+  };
 
   useEffect(() => {
     const fetchAnimeList = async () => {
       client
         .fetchUserAnimeList()
         .then((collection) => {
-          fetching = false;
           if (collection.lists.length) {
             collection.lists.map((l) => {
-              if (l.status === filter) filteredList = l.entries;
+              if (l.status === MediaListStatus.Current) {
+                animeWatching = l;
+              } else if (l.status === MediaListStatus.Completed) {
+                animeCompleted = l;
+              } else if (l.status === MediaListStatus.Dropped) {
+                animeDropped = l;
+              } else if (l.status === MediaListStatus.Paused) {
+                animePaused = l;
+              }
             });
           }
+          fetching = false;
+          console.log("user is: " + user);
         })
         .catch((err) => (error = err));
     };
     fetchAnimeList();
-    console.log("user is: " + user);
   }, []);
 
   if (error)
@@ -53,13 +66,14 @@ const Feed = ({ navigation }) => {
       <Center>
         <Text>
           Looks like you haven't filled in any entries in AniList, move to the
-          search tab and start wacthing!
+          search tab and start watching!
         </Text>
       </Center>
     );
   } else
     return (
       <Center>
+
         <FlatList
           style={{ width: "100%" }}
           renderItem={({ item }) => {
@@ -67,7 +81,7 @@ const Feed = ({ navigation }) => {
               <EntryAnimePoster
                 Entry={{ anime: item }}
                 onPress={() => {
-                  navigation.navigate("EntryAnimeDetailsParamList", {
+                  navigation.navigate("EntryAnimeDetails", {
                     AnimeDetails: {
                       anime: item,
                     },

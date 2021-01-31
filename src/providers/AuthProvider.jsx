@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React,{ createContext, useEffect, useState } from "react";
 import { Client } from "anilist-wrapper";
 
-export const AuthContext = createContext()
+export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
