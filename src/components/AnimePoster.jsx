@@ -1,11 +1,12 @@
-import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
+import React from "react";
+import { TouchableOpacity, View, Text, StyleSheet, Image } from "react-native";
 import { Badge, Avatar} from "react-native-paper";
 import { formatEpisodes } from "../util";
 
-export const EntryAnimePoster = ({ Entry, onPress }) => {
-  const episodes = formatEpisodes(Entry.anime);
-  const coverImgUrl = Entry.anime.media.coverImage.extraLarge || "";
-  const title = Entry.anime.media.title.userPreferred || "";
+export const EntryAnimePoster = ({ entry, onPress }) => {
+  const episodes = formatEpisodes(entry);
+  const coverImgUrl = entry.media.coverImage.extraLarge || "";
+  const title = entry.media.title.userPreferred || "";
 
   return (
     <View style={styles.container}>
@@ -14,7 +15,7 @@ export const EntryAnimePoster = ({ Entry, onPress }) => {
         onPress={() => onPress()}
       >
         <View>
-          <Avatar.Image
+          <Image
             source={{ uri: coverImgUrl }}
             style={styles.pvAnimeImage}
           />

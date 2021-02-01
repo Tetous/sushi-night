@@ -1,58 +1,63 @@
 import React, { useContext, useEffect, useState } from "react";
 import { createStackNavigator } from "@react-navigation/stack";
 import { Center } from "../components/Center";
-import { FlatList, TouchableOpacity} from "react-native";
+import { FlatList, TouchableOpacity, View } from "react-native";
 import { MediaListStatus } from "anilist-wrapper";
 import { AuthContext } from "../providers/AuthProvider";
 import { EntryAnimePoster } from "../components/AnimePoster";
-import { Text, ActivityIndicator, RadioButton } from "react-native-paper";
+import { Text, ActivityIndicator, Avatar, Divider } from "react-native-paper";
+import { AntDesign } from "@expo/vector-icons";
+import { AnimeStack } from "./Anime";
+import DropDownPicker from "react-native-dropdown-picker";
 
 const Stack = createStackNavigator();
 
 const Feed = ({ navigation }) => {
-  const { client, user } = useContext(AuthContext);
-  const [expanded, setExpanded] = useState(false);
-  var fetching = true;
-  var error = null;
-
-  var lists = [];
-  var [animeWatching, animeCompleted, animeDropped, animePaused] = lists;
-  var filteredList = null;
-
-  const handlePress = () => {
-    setExpanded(!expanded); 
-  };
+  const { client } = useContext(AuthContext);
+  const [fetching, setFetching] = useState(true);
+  const [error, setError] = useState(null);
+  const [filteredList, setFilteredList] = useState(null);
+  const [filter, setFilter] = useState("");
 
   useEffect(() => {
-    const fetchAnimeList = async () => {
-      client
-        .fetchUserAnimeList()
-        .then((collection) => {
-          if (collection.lists.length) {
+    if (client) {
+      (async () => {
+        client
+          .fetchUserAnimeList()
+          .then((collection) => {
             collection.lists.map((l) => {
               if (l.status === MediaListStatus.Current) {
-                animeWatching = l;
-              } else if (l.status === MediaListStatus.Completed) {
-                animeCompleted = l;
-              } else if (l.status === MediaListStatus.Dropped) {
-                animeDropped = l;
-              } else if (l.status === MediaListStatus.Paused) {
-                animePaused = l;
+                setFilteredList(filter);
               }
             });
-          }
-          fetching = false;
-          console.log("user is: " + user);
-        })
-        .catch((err) => (error = err));
-    };
-    fetchAnimeList();
-  }, []);
+            setFilter(MediaListStatus.Current);
+            setFetching(false);
+          })
+          .catch((err) => {
+            setError(err);
+            console.log("error is: " + JSON.stringify(err));
+          });
+      })();
+    }
+  }, [client]);
+
+  useEffect(() => {
+    if (client.animeLists) {
+      var found = true;
+      client.animeLists.lists.filter((l) => {
+        if (l.status === filter) {
+          setFilteredList(l);
+          found = true;
+        }
+        if (!found) setFilteredList(null);
+      });
+    }
+  }, [filter]);
 
   if (error)
     return (
       <Center>
-        <Text>{JSON.stringify(error)}</Text>
+        <Text style={{ color: "red" }}>{JSON.stringify(error)}</Text>
       </Center>
     );
   else if (fetching)
@@ -61,50 +66,107 @@ const Feed = ({ navigation }) => {
         <ActivityIndicator size="large" />
       </Center>
     );
-  else if (!client.animeLists.lists.length) {
+  else
     return (
-      <Center>
-        <Text>
-          Looks like you haven't filled in any entries in AniList, move to the
-          search tab and start watching!
-        </Text>
-      </Center>
-    );
-  } else
-    return (
-      <Center>
-
-        <FlatList
-          style={{ width: "100%" }}
-          renderItem={({ item }) => {
-            return (
-              <EntryAnimePoster
-                Entry={{ anime: item }}
-                onPress={() => {
-                  navigation.navigate("EntryAnimeDetails", {
-                    AnimeDetails: {
-                      anime: item,
-                    },
-                  });
-                }}
-              />
-            );
+      <View style={{flex:1}}>
+        <DropDownPicker
+          items={[
+            { label: "Currently watching", value: MediaListStatus.Current },
+            { label: "Completed", value: MediaListStatus.Completed },
+            { label: "Paused", value: MediaListStatus.Paused },
+            { label: "Planning to watch", value: MediaListStatus.Planning },
+            { label: "Dropped", value: MediaListStatus.Dropped },
+          ]}
+          defaultValue={MediaListStatus.Current}
+          containerStyle={{ height: 40 }}
+          itemStyle={{
+            justifyContent: "flex-start",
           }}
-          //                            id of the entry.
-          keyExtractor={(anime, _) => anime.id.toString()}
-          data={filteredList}
+          dropDownStyle={{ backgroundColor: "#fafafa" }}
+          onChangeItem={(item) => setFilter(item.value)}
         />
-      </Center>
+        <Divider />
+        {filteredList ? (
+          <FlatList
+            style={{ width: "100%", flex:1 }}
+            renderItem={({ item }) => {
+              console.log(JSON.stringify(item))
+              console.log("rendering!")
+              return (
+                <EntryAnimePoster
+                  entry={item}
+                  onPress={() => {
+                    //pass the item + the status in the list.
+                    navigation.navigate("Anime", {
+                      screen: "AnimeDetails",
+                    });
+                  }}
+                />
+              );
+            }}
+            //                            id of the entry.
+            keyExtractor={(anime, idx) => anime.id.toString()}
+            extraData={filter}
+            data={filteredList.entries}
+            numColumns={3}
+          />
+        ) : (
+          <Text>Esa lista esta vacia</Text>
+        )}
+      </View>
     );
 };
 
 export const HomeStack = ({}) => {
-  const { logout } = useContext(AuthContext);
+  const { logout, client } = useContext(AuthContext);
+  const [fetching, setFetching] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (client) {
+      (async () => {
+        await client
+          .fetchUser()
+          .then((d) => {
+            setFetching(false);
+            console.log(JSON.stringify(client.userData));
+          })
+          .catch((err) => {
+            setError(err);
+          });
+      })();
+    } else {
+      setFetching(true);
+    }
+  }, [client]);
+
   return (
     <Stack.Navigator initialRouteName="Feed">
       <Stack.Screen
         name="Feed"
         options={{
+          title: "",
+          headerLeft: () => {
+            if (fetching) {
+              return (
+                <ActivityIndicator style={{ marginLeft: 8 }} size="large" />
+              );
+            } else if (error) {
+              console.log(error);
+              return <Text>Error consultando datos de su usuario.</Text>;
+            }
+            return (
+              <View style={{ flexDirection: "row", marginLeft: 8 }}>
+                <Avatar.Image
+                  size={60}
+                  source={{ uri: client.userData.avatar.large }}
+                />
+                <Text style={{ marginTop: 35, marginLeft: 10, color: "black" }}>
+                  {client.userData.name}
+                </Text>
+              </View>
+            );
+          },
           headerRight: () => {
             return (
               <TouchableOpacity
@@ -112,13 +174,14 @@ export const HomeStack = ({}) => {
                   logout();
                 }}
               >
-                <Text>Log out</Text>
+                <Text style={{ color: "red", marginRight: 12 }}>Log out</Text>
               </TouchableOpacity>
             );
           },
         }}
         component={Feed}
       />
+      <Stack.Screen name="Anime" component={AnimeStack} />
     </Stack.Navigator>
   );
 };
