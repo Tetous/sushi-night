@@ -1,7 +1,7 @@
 import React,{ useContext } from "react"
 import { AuthContext } from "./providers/AuthProvider"
 import { NavigationContainer } from "@react-navigation/native"
-import { AppTabs } from "./AppTabs";
+import { RootNav } from "./AppTabs";
 import { AuthStack } from "./stacks/Auth";
 
 export const Routes = () =>{
@@ -9,7 +9,7 @@ export const Routes = () =>{
 
     return (
         <NavigationContainer>
-            {client ? <AppTabs/> : <AuthStack />}
+            {client ? <RootNav/> : <AuthStack />}
         </NavigationContainer>
     );
 }

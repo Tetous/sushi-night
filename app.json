@@ -3,7 +3,8 @@
   "displayName": "sushi-night",
   "expo": {
     "name": "sushi-night",
-    "slug": "sushi-night",
+    "slug": "sushinight",
+    "scheme": "sushinight",
     "version": "1.0.0",
     "assetBundlePatterns": [
       "**/*"

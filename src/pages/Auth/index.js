@@ -3,10 +3,8 @@ import { Text, Avatar, Button } from "react-native-paper";
 import { AntDesign, FontAwesome5 } from "@expo/vector-icons";
 import React, { useContext } from "react";
 import { openBrowserAsync } from "expo-web-browser";
-import { AuthContext } from "../providers/AuthProvider";
-import { createStackNavigator } from "@react-navigation/stack";
-
-const Stack = createStackNavigator();
+import { AuthContext } from "../../providers/AuthProvider";
+import { useEffect } from "react";
 
 const Login = () => {
   const { login } = useContext(AuthContext);
@@ -21,7 +19,7 @@ const Login = () => {
           marginLeft: 60,
         }}
       >
-        <Avatar.Image source={require("../static/logo.png")} size={400} />
+        <Avatar.Image source={require("../../static/logo.png")} size={80} />
         <View style={{ alignSelf: "flex-end", flexDirection: "row" }}>
           <TouchableOpacity
             onPress={() => {
@@ -119,19 +117,4 @@ const styles = StyleSheet.create({
   },
 });
 
-
-export const AuthStack = () => {
-    return (
-      <Stack.Navigator
-        screenOptions={{
-          header: () => null,
-        }}
-        initialRouteName="Login"
-      >
-        <Stack.Screen
-          name="Login"
-          component={Login}
-        />
-      </Stack.Navigator>
-    );
-  };
+export default Login;

@@ -6,7 +6,6 @@ import { MediaListStatus } from "anilist-wrapper";
 import { AuthContext } from "../providers/AuthProvider";
 import { EntryAnimePoster } from "../components/AnimePoster";
 import { Text, ActivityIndicator, Avatar, Divider } from "react-native-paper";
-import { AntDesign } from "@expo/vector-icons";
 import { AnimeStack } from "./Anime";
 import DropDownPicker from "react-native-dropdown-picker";
 
@@ -54,6 +53,18 @@ const Feed = ({ navigation }) => {
     }
   }, [filter]);
 
+  const renderItem = ({ item }) => (
+    <EntryAnimePoster
+      entry={item}
+      onPress={() => {
+        //pass the item + the status in the list.
+        navigation.navigate(
+          "Anime"
+        );
+      }}
+    />
+  );
+
   if (error)
     return (
       <Center>
@@ -68,7 +79,7 @@ const Feed = ({ navigation }) => {
     );
   else
     return (
-      <View style={{flex:1}}>
+      <View style={{ flex: 1 }}>
         <DropDownPicker
           items={[
             { label: "Currently watching", value: MediaListStatus.Current },
@@ -88,29 +99,17 @@ const Feed = ({ navigation }) => {
         <Divider />
         {filteredList ? (
           <FlatList
-            style={{ width: "100%", flex:1 }}
-            renderItem={({ item }) => {
-              console.log(JSON.stringify(item))
-              console.log("rendering!")
-              return (
-                <EntryAnimePoster
-                  entry={item}
-                  onPress={() => {
-                    //pass the item + the status in the list.
-                    navigation.navigate("Anime", {
-                      screen: "AnimeDetails",
-                    });
-                  }}
-                />
-              );
-            }}
+            style={{ width: "100%", flex: 1 }}
+            renderItem={renderItem}
             //                            id of the entry.
-            keyExtractor={(anime, idx) => anime.id.toString()}
+            keyExtractor={(item) => item.id.toString()}
             extraData={filter}
             data={filteredList.entries}
             numColumns={3}
+            disableVirtualization={true}
           />
         ) : (
+          //virtualization makes scrolling thorugh flicker which is horrible.
           <Text>Esa lista esta vacia</Text>
         )}
       </View>
@@ -181,7 +180,6 @@ export const HomeStack = ({}) => {
         }}
         component={Feed}
       />
-      <Stack.Screen name="Anime" component={AnimeStack} />
     </Stack.Navigator>
   );
 };
