@@ -1,6 +1,13 @@
 import React, { PureComponent } from "react";
-import { TouchableOpacity, View, Text, StyleSheet, Image } from "react-native";
-import { Badge, Avatar } from "react-native-paper";
+import {
+  TouchableOpacity,
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  Platform,
+} from "react-native";
+import { Badge } from "react-native-paper";
 import { formatEpisodes } from "../util";
 
 export class EntryAnimePoster extends PureComponent {
@@ -18,13 +25,20 @@ export class EntryAnimePoster extends PureComponent {
         >
           <View>
             <Image source={{ uri: coverImgUrl }} style={styles.pvAnimeImage} />
-            <Badge style={{ position: "absolute" }}>{episodes}</Badge>
+            <Badge
+              style={{
+                position: "absolute",
+                backgroundColor: "#222831",
+                fontSize: 16,
+              }}
+            >
+              {episodes}
+            </Badge>
           </View>
-
-          <Text style={styles.title} numberOfLines={1}>
-            {title}
-          </Text>
         </TouchableOpacity>
+        <Text style={styles.title} numberOfLines={1}>
+          {title}
+        </Text>
       </View>
     );
   }
@@ -32,16 +46,28 @@ export class EntryAnimePoster extends PureComponent {
 
 const styles = StyleSheet.create({
   pvAnimeImage: {
-    width: 210,
-    height: 320,
+    width: Platform.OS === "web" ? 210 : 120,
+    height: Platform.OS === "web" ? 320 : 210,
+    alignSelf: "center",
   },
   container: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     margin: 2,
-    flexDirection: "row",
-    width: "75%",
+    flexDirection: "column",
+    borderWidth:1,
+    borderColor:"#393e46",
+    borderRadius:10,
+    padding:2
   },
-  title: { flex: 1, width: "100%", textAlign: "center", fontSize: 14 },
+  title: {
+    flex: 1,
+    width: "90%",
+    textAlign: "center",
+    fontSize: 14,
+    color: "#eeeeee",
+    fontWeight: "bold",
+    alignSelf: "flex-start",
+  },
 });

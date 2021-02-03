@@ -1,15 +1,15 @@
 import React, { useContext, useEffect, useState } from "react";
 import { createStackNavigator } from "@react-navigation/stack";
 import { Center } from "../components/Center";
-import { FlatList, TouchableOpacity, View } from "react-native";
+import { FlatList, Platform, TouchableOpacity, View } from "react-native";
 import { MediaListStatus } from "anilist-wrapper";
 import { AuthContext } from "../providers/AuthProvider";
 import { EntryAnimePoster } from "../components/AnimePoster";
 import { Text, ActivityIndicator, Avatar, Divider } from "react-native-paper";
-import { AnimeStack } from "./Anime";
 import DropDownPicker from "react-native-dropdown-picker";
 
 const Stack = createStackNavigator();
+const numColumns = Platform.OS === "web" ? 6 : 3;
 
 const Feed = ({ navigation }) => {
   const { client } = useContext(AuthContext);
@@ -58,9 +58,12 @@ const Feed = ({ navigation }) => {
       entry={item}
       onPress={() => {
         //pass the item + the status in the list.
-        navigation.navigate(
-          "Anime"
-        );
+        navigation.navigate("Anime", {
+          screen: "AnimeDetails",
+          params: {
+            anime: item,
+          },
+        });
       }}
     />
   );
@@ -79,7 +82,7 @@ const Feed = ({ navigation }) => {
     );
   else
     return (
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, backgroundColor: "black" }}>
         <DropDownPicker
           items={[
             { label: "Currently watching", value: MediaListStatus.Current },
@@ -89,23 +92,30 @@ const Feed = ({ navigation }) => {
             { label: "Dropped", value: MediaListStatus.Dropped },
           ]}
           defaultValue={MediaListStatus.Current}
-          containerStyle={{ height: 40 }}
+          containerStyle={{ height: 60 }}
           itemStyle={{
             justifyContent: "flex-start",
           }}
-          dropDownStyle={{ backgroundColor: "#fafafa" }}
+          activeLabelStyle={{color:"#eeeeee"}}
+          labelStyle={{color:"#00adb5", fontSize:16}}
+          dropDownStyle={{ backgroundColor: "#393e46", borderColor: "black" }}
           onChangeItem={(item) => setFilter(item.value)}
+          style={{
+            backgroundColor: "#222831",
+            borderColor: "black",
+            marginTop: 4,
+            marginBottom: 4
+          }}
         />
         <Divider />
         {filteredList ? (
           <FlatList
             style={{ width: "100%", flex: 1 }}
             renderItem={renderItem}
-            //                            id of the entry.
             keyExtractor={(item) => item.id.toString()}
             extraData={filter}
             data={filteredList.entries}
-            numColumns={3}
+            numColumns={numColumns}
             disableVirtualization={true}
           />
         ) : (
@@ -157,10 +167,13 @@ export const HomeStack = ({}) => {
             return (
               <View style={{ flexDirection: "row", marginLeft: 8 }}>
                 <Avatar.Image
-                  size={60}
+                  size={50}
+                  style={{alignSelf:"flex-end"}}
                   source={{ uri: client.userData.avatar.large }}
                 />
-                <Text style={{ marginTop: 35, marginLeft: 10, color: "black" }}>
+                <Text
+                  style={{ marginTop: 35, marginLeft: 10, color: "#00adb5" }}
+                >
                   {client.userData.name}
                 </Text>
               </View>
@@ -173,7 +186,9 @@ export const HomeStack = ({}) => {
                   logout();
                 }}
               >
-                <Text style={{ color: "red", marginRight: 12 }}>Log out</Text>
+                <Text style={{ color: "#00adb5", marginRight: 12 }}>
+                  Log out
+                </Text>
               </TouchableOpacity>
             );
           },

@@ -7,7 +7,8 @@ export const Center = ({ children }) => {
       style={{
         flex: 1,
         alignItems: "center",
-        justifyContent: "center"
+        justifyContent: "center",
+        backgroundColor: "black",
       }}
     >
       {children}
