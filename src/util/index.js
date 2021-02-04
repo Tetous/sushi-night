@@ -120,4 +120,17 @@ export async function getIdFromGogo(anime) {
 const totalEps = (nextAiringEpisode, episodes) =>
   nextAiringEpisode ? nextAiringEpisode.episode - 1 : episodes;
 
-export async function getEpisodeLinks(id, episode) {}
+export async function getEpisodeLinks(id, episode) {
+  let links = [];
+  console.log(id);
+  console.log(episode);
+  await axios
+    .get(`${API}/watch/${id}/${episode}`)
+    .then((res) => {
+      console.log("from axios got da links: " + JSON.stringify(res.data));
+      links = res.data;
+    })
+    .catch((err) => console.log(err));
+    
+  return links;
+}

@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   View,
   Image,
-  FlatList,
   ActivityIndicator,
   ScrollView,
   Platform,
@@ -21,11 +20,15 @@ import {
   epsToRender,
   calcRanges,
   getIdFromGogo,
+  getEpisodeLinks,
 } from "../util";
+import { WebView } from "react-native-webview";
+import { useNavigation } from "@react-navigation/native";
 
 const Stack = createStackNavigator();
 
-const EpisodeList = ({ from, to }) => {
+const EpisodeList = ({ from, to, gogoId, anime }) => {
+  const navigation = useNavigation();
   const episodesToRender = epsToRender(from, to);
 
   return (
@@ -56,7 +59,13 @@ const EpisodeList = ({ from, to }) => {
               <Button
                 mode="outlined"
                 labelStyle={{ fontSize: 18 }}
-                onPress={() => console.log(ep)}
+                onPress={() => {
+                  navigation.navigate("WatchEpisode", {
+                    anime,
+                    gogoId,
+                    ep,
+                  });
+                }}
               >
                 {ep}
               </Button>
@@ -299,9 +308,14 @@ const AnimeDetails = ({ navigation, route }) => {
       </View>
       <View style={{ marginTop: 5 }}>
         <View>
-          {ranges.length ? (
+          {ranges.length && gogoId ? (
             <View style={{ flexDirection: "column" }}>
-              <EpisodeList from={currentFrom} to={currentTo} />
+              <EpisodeList
+                from={currentFrom}
+                to={currentTo}
+                gogoId={gogoId}
+                anime={details}
+              />
               <View
                 style={{
                   flexWrap: "wrap",
@@ -342,6 +356,97 @@ const AnimeDetails = ({ navigation, route }) => {
   );
 };
 
+const WatchEpisode = ({ route }) => {
+  const { anime, gogoId, ep } = route.params;
+  //usar el cliente para actualizar la lista
+  const { client } = useContext(AuthContext);
+  const [links, setLinks] = useState(null);
+  const [option, setSelectedOption] = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      await getEpisodeLinks(gogoId, ep).then((linksResponse) => {
+        setSelectedOption(linksResponse[0]);
+        setLinks(linksResponse);
+      });
+    })();
+  }, []);
+
+  if (!links) {
+    return (
+      <View style={{ backgroundColor: "black", alignContent: "center" }}>
+        <ActivityIndicator size="large" style={{ alignSelf: "center" }} />
+      </View>
+    );
+  } else if (!links.length) {
+    return (
+      <View style={{ backgroundColor: "black", alignContent: "center" }}>
+        <Text style={{ color: "white", fontSize: 30 }}>
+          There are no links yet for this episode.
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View
+      style={{
+        backgroundColor: "black",
+        alignContent: "center",
+        flex: 1,
+        flexDirection: "column",
+      }}
+    >
+      {Platform.OS === "web" ? (
+        <View>
+          <video controls src={option.link} />
+        </View>
+      ) : (
+        <View>
+          <WebView
+            allowsFullscreenVideo={true}
+            originWhitelist={["*"]}
+            source={{
+              html: `
+              <html>
+                    <body>
+                        <video controls src=${option.link} />
+                    </body>
+              </html>
+              `,
+            }}
+          ></WebView>
+        </View>
+      )}
+      <View style={{ flex: 1, flexDirection: "column" }}>
+        <View
+          style={{
+            alignSelf: "center",
+            width: "80%",
+            justifyContent: "center",
+          }}
+        >
+          {links.map((option) => {
+            return (
+              <Button
+                key={option.link}
+                mode="contained"
+                onPress={() => setSelectedOption(option)}
+              >
+                {option.quality}
+              </Button>
+            );
+          })}
+        </View>
+        <View style={{ justifyContent: "space-evenly" }}>
+          <Button icon="arrow-left" mode="contained" />
+          <Button icon="arrow-right" mode="contained" />
+        </View>
+      </View>
+    </View>
+  );
+};
+
 export const AnimeStack = ({}) => {
   return (
     <Stack.Navigator initialRouteName="AnimeDetails">
@@ -351,6 +456,16 @@ export const AnimeStack = ({}) => {
         options={{
           headerShown: false,
         }}
+      />
+      <Stack.Screen
+        name="WatchEpisode"
+        component={WatchEpisode}
+        // options={({ route }) => ({
+        //   headerLeft:
+        //     route.params.anime.title.userPreferred +
+        //     " - " +
+        //     route.params.episode,
+        // })}
       />
     </Stack.Navigator>
   );
