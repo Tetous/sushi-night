@@ -20,6 +20,7 @@ import {
   formatListStatus,
   epsToRender,
   calcRanges,
+  getIdFromGogo,
 } from "../util";
 
 const Stack = createStackNavigator();
@@ -74,24 +75,33 @@ const AnimeDetails = ({ navigation, route }) => {
   const [currentFrom, setCurrentFrom] = useState(0);
   const [currentTo, setCurrentTo] = useState(0);
   const [ranges, setRanges] = useState([]);
+  const [gogoId, setGogoId] = useState(null);
 
   useEffect(() => {
     anime.media.id = anime.mediaId;
-    client
-      .animeDetails(anime.media)
-      .then((detailsResponse) => {
-        const fixedDesc = detailsResponse.description
-        .replace(/<br>/g, "")
-        .replace(/<[^>]*>/g, "");
-        console.log(fixedDesc);
-        detailsResponse.description = fixedDesc;
-        setDetails(detailsResponse);
-        const rs = calcRanges(detailsResponse);
-        setRanges(rs);
-        setCurrentFrom(rs[0].from);
-        setCurrentTo(rs[0].to);
-      })
-      .catch((err) => console.log(err));
+    (async () => {
+      await client
+        .animeDetails(anime.media)
+        .then(async (detailsResponse) => {
+          detailsResponse.description = detailsResponse.description
+            .replace(/<br>/g, "")
+            .replace(/<[^>]*>/g, "");
+          setDetails(detailsResponse);
+
+          const rs = calcRanges(detailsResponse);
+          setRanges(rs);
+          setCurrentFrom(rs[0].from);
+          setCurrentTo(rs[0].to);
+
+          await getIdFromGogo(detailsResponse)
+            .then((id) => {
+              console.log("id is: " + id);
+              setGogoId(id);
+            })
+            .catch((err) => console.log(err));
+        })
+        .catch((err) => console.log(err));
+    })();
   }, []);
 
   if (!details)
@@ -137,7 +147,7 @@ const AnimeDetails = ({ navigation, route }) => {
               zIndex: 0,
               position: "absolute",
               alignSelf: "flex-start",
-              resizeMode: Platform.OS === "web" ? "stretch" : "cover"
+              resizeMode: Platform.OS === "web" ? "stretch" : "cover",
             }}
             resizeMode={Platform.OS === "web" ? "stretch" : "contain"}
             resizeMethod={Platform.OS === "web" ? "scale" : "resize"}
@@ -224,7 +234,7 @@ const AnimeDetails = ({ navigation, route }) => {
                     margin: 5,
                     alignSelf: "center",
                   }}
-                  textStyle={{fontSize:16}}
+                  textStyle={{ fontSize: 16 }}
                 >
                   {genre}
                 </Chip>
@@ -299,7 +309,7 @@ const AnimeDetails = ({ navigation, route }) => {
                   alignItems: "center",
                   flexDirection: "row",
                   justifyContent: "center",
-                  marginTop:10
+                  marginTop: 10,
                 }}
               >
                 {ranges.map((range) => {
@@ -314,7 +324,7 @@ const AnimeDetails = ({ navigation, route }) => {
                           setCurrentFrom(range.from);
                           setCurrentTo(range.to);
                         }}
-                        textStyle={{fontSize:16}}
+                        textStyle={{ fontSize: 16 }}
                       >
                         {range.from !== range.to
                           ? `${range.from} - ${range.to}`

@@ -1,4 +1,5 @@
 import { MediaStatus, MediaListStatus } from "anilist-wrapper";
+import axios from "axios";
 
 export const maxEpisodesBeforePagination = 20;
 
@@ -63,7 +64,7 @@ export const calcRanges = (anime) => {
   if (status === MediaStatus.NotYetReleased) {
     return [];
   }
-  const totalEpisodes = nextAiringEpisode ? nextAiringEpisode.episode - 1 : episodes;
+  const totalEpisodes = totalEps(nextAiringEpisode, episodes);
 
   const rangeCount = Math.ceil(totalEpisodes / maxEpisodesBeforePagination);
 
@@ -85,3 +86,38 @@ export const calcRanges = (anime) => {
   }
   return ranges;
 };
+
+const API = "https://sushi-night-backend.herokuapp.com/api/anime";
+
+export async function getIdFromGogo(anime) {
+  let idList = [];
+  const totalEpisodes = totalEps(anime.nextAiringEpisode, anime.episodes);
+  let otherNames = "";
+  const year = anime.startDate.year;
+
+  let valuesArray = Object.values(anime.title);
+
+  valuesArray = valuesArray.filter((v, i) => valuesArray.indexOf(v) == i);
+
+  for (let titleFormat of valuesArray) {
+    //sometimes they are null thats why i check
+    if (titleFormat) otherNames += titleFormat + ",";
+  }
+  otherNames = otherNames.slice(0, -1); //remove last comma.
+  await axios
+    .get(
+      `${API}/getId/${anime.title.romaji}/${totalEpisodes}/${otherNames}/${year}`
+    )
+    .then((ids) => {
+      idList = ids.data[0];
+    })
+    .catch((err) => console.log(err));
+
+  console.log("return " + JSON.stringify(idList));
+  return idList;
+}
+
+const totalEps = (nextAiringEpisode, episodes) =>
+  nextAiringEpisode ? nextAiringEpisode.episode - 1 : episodes;
+
+export async function getEpisodeLinks(id, episode) {}
