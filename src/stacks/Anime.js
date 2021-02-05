@@ -22,9 +22,10 @@ import {
   getIdFromGogo,
   getEpisodeLinks,
 } from "../util";
-import { WebView } from "react-native-webview";
+import { Video } from "expo-av";
 import { useNavigation } from "@react-navigation/native";
-
+import { AntDesign } from "@expo/vector-icons";
+import { useRef } from "react";
 const Stack = createStackNavigator();
 
 const EpisodeList = ({ from, to, gogoId, anime }) => {
@@ -356,96 +357,167 @@ const AnimeDetails = ({ navigation, route }) => {
   );
 };
 
-const WatchEpisode = ({ route }) => {
-  const { anime, gogoId, ep } = route.params;
-  //usar el cliente para actualizar la lista
-  const { client } = useContext(AuthContext);
-  const [links, setLinks] = useState(null);
-  const [option, setSelectedOption] = useState(null);
+class WatchEpisode extends React.Component {
+  static contextType = AuthContext;
 
-  useEffect(() => {
+  constructor(props) {
+    super(props);
+    this.state = {
+      links: null,
+      option: null,
+      videoKey: 0,
+      anime: this.props.route.params.anime,
+      gogoId: this.props.route.params.gogoId,
+      ep: this.props.route.params.ep,
+      loading: true,
+    };
+
     (async () => {
-      await getEpisodeLinks(gogoId, ep).then((linksResponse) => {
-        setSelectedOption(linksResponse[0]);
-        setLinks(linksResponse);
-      });
+      console.log(
+        `${this.state.gogoId} ${this.state.ep} ${this.state.anime.id}`
+      );
+      await getEpisodeLinks(this.state.gogoId, this.state.ep).then(
+        (linksResponse) => {
+          console.log(JSON.stringify(linksResponse));
+          this.setState({
+            ...this.state,
+            links: linksResponse,
+            option: linksResponse[0],
+            loading: false,
+          });
+        }
+      );
     })();
-  }, []);
-
-  if (!links) {
-    return (
-      <View style={{ backgroundColor: "black", alignContent: "center" }}>
-        <ActivityIndicator size="large" style={{ alignSelf: "center" }} />
-      </View>
-    );
-  } else if (!links.length) {
-    return (
-      <View style={{ backgroundColor: "black", alignContent: "center" }}>
-        <Text style={{ color: "white", fontSize: 30 }}>
-          There are no links yet for this episode.
-        </Text>
-      </View>
-    );
   }
 
-  return (
-    <View
-      style={{
-        backgroundColor: "black",
-        alignContent: "center",
-        flex: 1,
-        flexDirection: "column",
-      }}
-    >
-      {Platform.OS === "web" ? (
+  _mountVideoWeb = (component) => {
+    this._video = component;
+    this._video.src = this.state.option.link;
+  };
+
+  _mountVideoMobile = (component) => {
+    this._video = component;
+    this._changeOption();
+  };
+
+  _changeOption() {
+    if (this._video) {
+      this._video.loadAsync({ uri: this.state.option.link });
+    }
+  }
+
+  _saveProgress() {
+    if (this._video){
+      console.log("progress " + this._video.currentTime);
+    }
+  }
+
+  render() {
+    //usar el cliente para actualizar la lista
+    const { client } = this.context;
+
+    if (this.state.loading) {
+      return (
         <View>
-          <video controls src={option.link} />
+          <ActivityIndicator size="large" />
         </View>
-      ) : (
-        <View>
-          <WebView
-            allowsFullscreenVideo={true}
-            originWhitelist={["*"]}
-            source={{
-              html: `
-              <html>
-                    <body>
-                        <video controls src=${option.link} />
-                    </body>
-              </html>
-              `,
-            }}
-          ></WebView>
+      );
+    } else if (!this.state.links) {
+      return (
+        <View style={{ backgroundColor: "black", alignContent: "center" }}>
+          <View>
+            <Text style={{ color: "red" }}>
+              No fueron encontrados links para ese capitulo
+            </Text>
+          </View>
+          <ActivityIndicator size="large" style={{ alignSelf: "center" }} />
         </View>
-      )}
-      <View style={{ flex: 1, flexDirection: "column" }}>
+      );
+    } else if (!this.state.links.length) {
+      return (
+        <View style={{ backgroundColor: "black", alignContent: "center" }}>
+          <Text style={{ color: "white", fontSize: 30 }}>
+            There are no links yet for this episode.
+          </Text>
+        </View>
+      );
+    } else {
+      return (
         <View
           style={{
-            alignSelf: "center",
-            width: "80%",
-            justifyContent: "center",
+            backgroundColor: "black",
+            alignContent: "center",
+            flex: 1,
+            flexDirection: "column",
           }}
         >
-          {links.map((option) => {
-            return (
-              <Button
-                key={option.link}
-                mode="contained"
-                onPress={() => setSelectedOption(option)}
-              >
-                {option.quality}
-              </Button>
-            );
-          })}
+          {Platform.OS === "web" ? (
+            <View>
+              <video
+                ref={this._mountVideoWeb}
+                controls
+                height={500}
+                onTimeUpdate={this._saveProgress}
+              />
+            </View>
+          ) : (
+            <Video
+              ref={this._mountVideoMobile}
+              resizeMode="contain"
+              useNativeControls={true}
+              style={{ width: "90%", height: 300, alignSelf: "center" }}
+            />
+          )}
+          <View
+            style={{
+              justifyContent: "space-around",
+              flexDirection: "row",
+              marginTop: 8,
+            }}
+          >
+            <Button mode="outlined" style={{ left: 4, position: "absolute" }}>
+              <AntDesign name="banckward" size={24} color="white" />
+            </Button>
+            <Button mode="outlined" style={{ right: 4, position: "absolute" }}>
+              <AntDesign name="forward" size={24} color="white" />
+            </Button>
+          </View>
+          <View style={{ flex: 1, flexDirection: "column", marginTop: 40 }}>
+            <View
+              style={{
+                alignSelf: "center",
+                width: "80%",
+                justifyContent: "center",
+                marginBottom: Platform.OS === "web" ? 10 : 0,
+              }}
+            >
+              {this.state.links.map((option) => {
+                return (
+                  <Button
+                    key={option.link}
+                    mode="contained"
+                    onPress={() => {
+                      this.setState({
+                        ...this.state,
+                        option: option,
+                        videoKey: this.state.videoKey + 1,
+                      });
+                      this._changeOption();
+                    }}
+                    style={{ marginTop: 10 }}
+                    labelStyle={{ fontSize: 16, fontWeight: "bold" }}
+                  >
+                    {option.quality}
+                  </Button>
+                );
+              })}
+            </View>
+          </View>
         </View>
-        <View style={{ justifyContent: "space-evenly" }}>
-          <Button icon="arrow-left" mode="contained" />
-          <Button icon="arrow-right" mode="contained" />
-        </View>
-      </View>
-    </View>
-  );
-};
+      );
+    }
+  }
+}
 
 export const AnimeStack = ({}) => {
   return (
@@ -457,16 +529,7 @@ export const AnimeStack = ({}) => {
           headerShown: false,
         }}
       />
-      <Stack.Screen
-        name="WatchEpisode"
-        component={WatchEpisode}
-        // options={({ route }) => ({
-        //   headerLeft:
-        //     route.params.anime.title.userPreferred +
-        //     " - " +
-        //     route.params.episode,
-        // })}
-      />
+      <Stack.Screen name="WatchEpisode" component={WatchEpisode} />
     </Stack.Navigator>
   );
 };

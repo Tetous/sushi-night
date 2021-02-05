@@ -122,12 +122,9 @@ const totalEps = (nextAiringEpisode, episodes) =>
 
 export async function getEpisodeLinks(id, episode) {
   let links = [];
-  console.log(id);
-  console.log(episode);
   await axios
     .get(`${API}/watch/${id}/${episode}`)
     .then((res) => {
-      console.log("from axios got da links: " + JSON.stringify(res.data));
       links = res.data;
     })
     .catch((err) => console.log(err));
