@@ -6,13 +6,10 @@ export const maxEpisodesBeforePagination = 20;
 export const formatEpisodes = (anime) => {
   let eps;
 
-  if (
-    anime.media.episodes === null ||
-    anime.media.status === MediaStatus.Releasing
-  ) {
+  if (!anime.media.episodes || anime.media.status === MediaStatus.Releasing) {
     eps = "?";
   } else {
-    eps = anime.media.episodes;
+    eps = anime.media.episodes; 
   }
 
   const progress = anime.progress ? anime.progress : 0;
@@ -31,6 +28,8 @@ export const formatListStatus = (status) => {
       return "Dropped";
     case MediaListStatus.Planning:
       return "Planning to watch";
+    default:
+      return "";
   }
 };
 
@@ -62,9 +61,10 @@ export const calcRanges = (anime) => {
   let { nextAiringEpisode } = anime;
   let { episodes } = anime;
   if (status === MediaStatus.NotYetReleased) {
-    return [];
+    return null;
   }
   const totalEpisodes = totalEps(nextAiringEpisode, episodes);
+  if (!totalEpisodes) return null;
 
   const rangeCount = Math.ceil(totalEpisodes / maxEpisodesBeforePagination);
 
@@ -120,7 +120,6 @@ export async function getIdFromGogo(anime) {
     })
     .catch((err) => console.log(err));
 
-  console.log("return " + JSON.stringify(idList));
   return idList;
 }
 

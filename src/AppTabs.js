@@ -50,8 +50,8 @@ export const AppTabs = ({}) => {
         keyboardHidesTabBar: true,
       }}
     >
-      <Tabs.Screen name="Search" component={SearchStack} />
       <Tabs.Screen name="Home" component={HomeStack} />
+      <Tabs.Screen name="Search" component={SearchStack} />
       <Tabs.Screen name="Settings" component={SettingsStack} />
     </Tabs.Navigator>
   );

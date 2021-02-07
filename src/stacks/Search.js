@@ -19,12 +19,11 @@ const Main = ({ navigation }) => {
   const search = async () => {
     if (searchQuery.length > 3) {
       setFetching(true);
-      console.log(searchQuery);
       await client
-        .searchAnime(searchQuery, {page,perPage:25})
+        .searchAnime(searchQuery, { page, perPage: 25 })
         .then((data) => {
+          console.log(JSON.stringify(data))
           setResults(data);
-          console.log(JSON.stringify(data));
         })
         .catch((err) => console.log(err));
       setFetching(false);
@@ -35,11 +34,11 @@ const Main = ({ navigation }) => {
     <SearchAnimePoster
       anime={item}
       onPress={() => {
-        //pass an extra param like needsUserFetchingData: true.
         navigation.navigate("Anime", {
           screen: "AnimeDetails",
           params: {
             anime: item,
+            fromSearch: true
           },
         });
       }}

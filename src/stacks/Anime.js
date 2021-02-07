@@ -13,7 +13,7 @@ import {
   Platform,
 } from "react-native";
 import { Center } from "../components/Center";
-import { Button, Chip } from "react-native-paper";
+import { Badge, Button, Chip, Modal, Portal } from "react-native-paper";
 import { Entypo } from "@expo/vector-icons";
 import { AuthContext } from "../providers/AuthProvider";
 import {
@@ -30,6 +30,7 @@ import { useNavigation } from "@react-navigation/native";
 import { AntDesign } from "@expo/vector-icons";
 import { Video } from "expo-av";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { UpdateEntry } from "../components/UpdateEntry";
 
 const Stack = createStackNavigator();
 
@@ -85,16 +86,42 @@ const EpisodeList = ({ from, to, gogoId, anime }) => {
 
 const AnimeDetails = ({ navigation, route }) => {
   const { client } = useContext(AuthContext);
-  const { anime } = route.params;
+  var [anime, setAnime] = useState(route.params.anime); //cant destructure since anime wont be read-only
   const [details, setDetails] = useState(null);
   const [currentFrom, setCurrentFrom] = useState(0);
   const [currentTo, setCurrentTo] = useState(0);
   const [ranges, setRanges] = useState([]);
   const [gogoId, setGogoId] = useState(null);
   const [fetching, setFetching] = useState(true); //this is regarding gogoanime stuff
+  const [updatingEntry, setUpdatingEntry] = useState(false);
 
   useEffect(() => {
+    if (route.params.fromSearch) {
+      anime.mediaId = anime.id;
+      anime.media = {};
+
+      //this means this route received a search object.
+      //look if it exists as an entry in the list.
+      if (anime.mediaListEntry) {
+        var found = false;
+        for (let i = 0; i < client.animeLists.lists.length; i++) {
+          if (found) break;
+
+          for (let j = 0; j < client.animeLists.lists[i].entries.length; j++) {
+            if (
+              client.animeLists.lists[i].entries[j].id ===
+              anime.mediaListEntry.id
+            ) {
+              anime = client.animeLists.lists[i].entries[j];
+              found = true;
+              break;
+            }
+          }
+        }
+      }
+    }
     anime.media.id = anime.mediaId;
+
     (async () => {
       await client
         .animeDetails(anime.media)
@@ -103,21 +130,21 @@ const AnimeDetails = ({ navigation, route }) => {
             .replace(/<br>/g, "")
             .replace(/<[^>]*>/g, "");
           setDetails(detailsResponse);
-
           anime.media = detailsResponse;
-
+          setAnime(anime);
           const rs = calcRanges(detailsResponse);
-          setRanges(rs);
-          setCurrentFrom(rs[0].from);
-          setCurrentTo(rs[0].to);
-
+          if (rs) {
+            setRanges(rs);
+            setCurrentFrom(rs[0].from);
+            setCurrentTo(rs[0].to);
+          }
           await getIdFromGogo(detailsResponse)
-            .then((id) => {
-              console.log("id is: " + id);
-              id && setGogoId(id); //the id can be null.
-              setFetching(false);
-            })
-            .catch((err) => console.log(err));
+              .then((id) => {
+                console.log("id is: " + id);
+                if (id) setGogoId(id); //the id can be null.
+                setFetching(false);
+              })
+              .catch((err) => console.log(err));
         })
         .catch((err) => console.log(err));
     })();
@@ -131,257 +158,290 @@ const AnimeDetails = ({ navigation, route }) => {
     );
 
   return (
-    <ScrollView style={{ backgroundColor: "black" }}>
-      <View style={{ flex: 1 }}>
-        <TouchableOpacity
-          style={{
-            zIndex: 4,
-            width: "100%",
-            position: "absolute",
-          }}
-          onPress={() => navigation.goBack()}
+    <View style={{ backgroundColor: "black", flex: 1 }}>
+      <Portal>
+        <Modal
+          visible={updatingEntry}
+          onDismiss={() => setUpdatingEntry(false)}
         >
-          <Entypo
-            name="arrow-bold-left"
-            size={60}
-            color="#eeeeee"
-            style={{ zIndex: 2 }}
-          />
-          <Entypo
-            name="arrow-bold-left"
-            size={56}
-            color="red"
-            style={{ position: "absolute", zIndex: 1 }}
-          />
-        </TouchableOpacity>
-
-        <View
-          style={{ alignSelf: "flex-start", width: "100%", maxHeight: "50%" }}
-        >
-          <Image
-            source={{ uri: details.bannerImage }}
+          <UpdateEntry anime={anime} />
+        </Modal>
+      </Portal>
+      <ScrollView>
+        <View style={{ flex: 1 }}>
+          <TouchableOpacity
             style={{
-              height: 200,
+              zIndex: 4,
               width: "100%",
-              zIndex: 0,
               position: "absolute",
-              alignSelf: "flex-start",
-              resizeMode: Platform.OS === "web" ? "stretch" : "cover",
             }}
-            resizeMode={Platform.OS === "web" ? "stretch" : "contain"}
-            resizeMethod={Platform.OS === "web" ? "scale" : "resize"}
-          />
+            onPress={() => navigation.goBack()}
+          >
+            <Entypo
+              name="arrow-bold-left"
+              size={60}
+              color="#eeeeee"
+              style={{ zIndex: 2 }}
+            />
+            <Entypo
+              name="arrow-bold-left"
+              size={56}
+              color="red"
+              style={{ position: "absolute", zIndex: 1 }}
+            />
+          </TouchableOpacity>
+
           <View
-            style={{
-              zIndex: 1,
-              alignSelf: "flex-start",
-              marginLeft: 20,
-              flexDirection: "row",
-              marginTop: 110,
-            }}
+            style={{ alignSelf: "flex-start", width: "100%", maxHeight: "50%" }}
           >
             <Image
-              source={{ uri: details.coverImage.extraLarge }}
+              source={{ uri: details.bannerImage }}
               style={{
-                height: 150,
-                width: 100,
+                height: 200,
+                width: "100%",
+                zIndex: 0,
+                position: "absolute",
                 alignSelf: "flex-start",
+                resizeMode: Platform.OS === "web" ? "stretch" : "cover",
               }}
-              resizeMode="contain"
+              resizeMode={Platform.OS === "web" ? "stretch" : "contain"}
+              resizeMethod={Platform.OS === "web" ? "scale" : "resize"}
             />
             <View
               style={{
-                alignSelf: "flex-end",
-                flexDirection: "column",
-                flexShrink: 1,
-                marginLeft: 5,
-                marginTop: 5,
-                flex: 1,
+                zIndex: 1,
+                alignSelf: "flex-start",
+                marginLeft: 20,
+                flexDirection: "row",
+                marginTop: 110,
               }}
             >
-              <Text
+              <Image
+                source={{ uri: details.coverImage.extraLarge }}
                 style={{
-                  color: "white",
-                }}
-                numberOfLines={1}
-              >
-                {formatListStatus(anime.status) + formatEpisodes(anime)}
-              </Text>
-              <Text
-                style={{
-                  fontSize: 16,
-                  color: "#eeeeee",
-                  fontWeight: "bold",
+                  height: 150,
+                  width: 100,
                   alignSelf: "flex-start",
-                  textAlign: "left",
+                }}
+                resizeMode="contain"
+              />
+              <View
+                style={{
+                  alignSelf: "flex-end",
+                  flexDirection: "column",
+                  flexShrink: 1,
+                  marginLeft: 5,
+                  marginTop: 5,
+                  flex: 1,
                 }}
               >
-                {details.title.userPreferred}
-              </Text>
+                <View
+                  style={{
+                    alignSelf: "flex-end",
+                    flexDirection: "row",
+                    flexShrink: 1,
+                    flex: 1,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "white",
+                    }}
+                    numberOfLines={1}
+                  >
+                    {formatListStatus(anime.status) + formatEpisodes(anime)}
+                  </Text>
+                  <TouchableOpacity
+                    style={{ marginLeft: 5 }}
+                    onPress={() => setUpdatingEntry(true)}
+                  >
+                    <Badge
+                      style={{
+                        backgroundColor: "#00adb5",
+                        color: "#eeeeee",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Update
+                    </Badge>
+                  </TouchableOpacity>
+                </View>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    color: "#eeeeee",
+                    fontWeight: "bold",
+                    alignSelf: "flex-start",
+                    textAlign: "left",
+                  }}
+                >
+                  {details.title.userPreferred}
+                </Text>
+              </View>
             </View>
           </View>
         </View>
-      </View>
-      <View
-        style={{
-          alignItems: "center",
-          justifyContent: "center",
-          alignContent: "center",
-          padding: 8,
-        }}
-      >
         <View
           style={{
-            width: "100%",
-            alignSelf: "flex-start",
+            alignItems: "center",
+            justifyContent: "center",
+            alignContent: "center",
+            padding: 8,
           }}
         >
           <View
             style={{
-              flexWrap: "wrap",
-              alignSelf: "center",
-              alignItems: "center",
-              flexDirection: "row",
-              justifyContent: "center",
+              width: "100%",
+              alignSelf: "flex-start",
             }}
           >
-            {details.genres.map((genre) => {
-              return (
-                <Chip
-                  key={genre}
-                  style={{
-                    margin: 5,
-                    alignSelf: "center",
-                  }}
-                  textStyle={{ fontSize: 16 }}
-                >
-                  {genre}
-                </Chip>
-              );
-            })}
+            <View
+              style={{
+                flexWrap: "wrap",
+                alignSelf: "center",
+                alignItems: "center",
+                flexDirection: "row",
+                justifyContent: "center",
+              }}
+            >
+              {details.genres.map((genre) => {
+                return (
+                  <Chip
+                    key={genre}
+                    style={{
+                      margin: 5,
+                      alignSelf: "center",
+                    }}
+                    textStyle={{ fontSize: 16 }}
+                  >
+                    {genre}
+                  </Chip>
+                );
+              })}
+            </View>
           </View>
         </View>
-      </View>
-      <View
-        style={{
-          alignContent: "flex-end",
-          justifyContent: "flex-start",
-          alignSelf: "center",
-          width: "80%",
-          padding: 4,
-        }}
-      >
-        <Text
+        <View
           style={{
-            color: "#eeeeee",
-            fontSize: 18,
-            textAlign: "justify",
-            textAlignVertical: "top",
-            lineHeight: 30,
+            alignContent: "flex-end",
+            justifyContent: "flex-start",
+            alignSelf: "center",
+            width: "80%",
+            padding: 4,
           }}
         >
-          {details.description}
-        </Text>
-      </View>
-      <View
-        style={{
-          alignItems: "center",
-          alignContent: "center",
-          alignSelf: "center",
-          justifyContent: "space-evenly",
-          width: "80%",
-          marginTop: 10,
-        }}
-      >
-        <Text
+          <Text
+            style={{
+              color: "#eeeeee",
+              fontSize: 18,
+              textAlign: "justify",
+              textAlignVertical: "top",
+              lineHeight: 30,
+            }}
+          >
+            {details.description}
+          </Text>
+        </View>
+        <View
           style={{
-            color: "#eeeeee",
-            fontSize: 18,
-            textAlign: "justify",
-            textAlignVertical: "top",
-            fontWeight: "bold",
+            alignItems: "center",
+            alignContent: "center",
+            alignSelf: "center",
+            justifyContent: "space-evenly",
+            width: "80%",
+            marginTop: 10,
           }}
         >
-          {`Status: ${formatAnimeStatus(details.status)}`}
-        </Text>
-        <Text
-          style={{
-            color: "#eeeeee",
-            fontSize: 18,
-            textAlign: "justify",
-            textAlignVertical: "top",
-            fontWeight: "bold",
-          }}
-        >
-          {`Average Score: ${details.averageScore}`}
-        </Text>
-      </View>
-      <View style={{ marginTop: 5 }}>
-        <View>
-          {gogoId ? (
-            ranges.length ? (
-              <View style={{ flexDirection: "column" }}>
-                <EpisodeList
-                  from={currentFrom}
-                  to={currentTo}
-                  gogoId={gogoId}
-                  anime={anime}
-                />
-                <View
-                  style={{
-                    flexWrap: "wrap",
-                    alignSelf: "center",
-                    alignItems: "center",
-                    flexDirection: "row",
-                    justifyContent: "center",
-                    marginTop: 10,
-                  }}
-                >
-                  {ranges.map((range) => {
-                    return (
-                      <View
-                        key={range.from}
-                        style={{ padding: 4, alignSelf: "flex-start" }}
-                      >
-                        <Chip
-                          selectedColor="#00adb5"
-                          onPress={() => {
-                            setCurrentFrom(range.from);
-                            setCurrentTo(range.to);
-                          }}
-                          textStyle={{ fontSize: 16 }}
+          <Text
+            style={{
+              color: "#eeeeee",
+              fontSize: 18,
+              textAlign: "justify",
+              textAlignVertical: "top",
+              fontWeight: "bold",
+            }}
+          >
+            {`Status: ${formatAnimeStatus(details.status)}`}
+          </Text>
+          <Text
+            style={{
+              color: "#eeeeee",
+              fontSize: 18,
+              textAlign: "justify",
+              textAlignVertical: "top",
+              fontWeight: "bold",
+            }}
+          >
+            {`Average Score: ${details.averageScore}`}
+          </Text>
+        </View>
+        <View style={{ marginTop: 5 }}>
+          <View>
+            {gogoId ? (
+              ranges.length ? (
+                <View style={{ flexDirection: "column" }}>
+                  <EpisodeList
+                    from={currentFrom}
+                    to={currentTo}
+                    gogoId={gogoId}
+                    anime={anime}
+                  />
+                  <View
+                    style={{
+                      flexWrap: "wrap",
+                      alignSelf: "center",
+                      alignItems: "center",
+                      flexDirection: "row",
+                      justifyContent: "center",
+                      marginTop: 10,
+                    }}
+                  >
+                    {ranges.map((range) => {
+                      return (
+                        <View
+                          key={range.from}
+                          style={{ padding: 4, alignSelf: "flex-start" }}
                         >
-                          {range.from !== range.to
-                            ? `${range.from} - ${range.to}`
-                            : `${range.from}`}
-                        </Chip>
-                      </View>
-                    );
-                  })}
+                          <Chip
+                            selectedColor="#00adb5"
+                            onPress={() => {
+                              setCurrentFrom(range.from);
+                              setCurrentTo(range.to);
+                            }}
+                            textStyle={{ fontSize: 16 }}
+                          >
+                            {range.from !== range.to
+                              ? `${range.from} - ${range.to}`
+                              : `${range.from}`}
+                          </Chip>
+                        </View>
+                      );
+                    })}
+                  </View>
                 </View>
-              </View>
+              ) : (
+                <Center>
+                  <Text style={{ color: "#393e46", fontSize: 16 }}>
+                    It seems that our provider doesn't have episodes for this
+                    anime yet.
+                  </Text>
+                </Center>
+              )
+            ) : fetching ? (
+              <Center>
+                <ActivityIndicator size="large" color="#00adb5" />
+              </Center>
             ) : (
               <Center>
                 <Text style={{ color: "#393e46", fontSize: 16 }}>
-                  It seems that our provider doesn't have episodes for this
-                  anime yet.
+                  Sorry, we couldn't find this anime ;(.
                 </Text>
               </Center>
-            )
-          ) : fetching ? (
-            <Center>
-              <ActivityIndicator size="large" color="#00adb5" />
-            </Center>
-          ) : (
-            <Center>
-              <Text style={{ color: "#393e46", fontSize: 16 }}>
-                Sorry, we couldn't find this anime ;(.
-              </Text>
-            </Center>
-          )}
+            )}
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 
