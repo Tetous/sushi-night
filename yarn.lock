@@ -2141,10 +2141,10 @@ ajv@^6.12.3:
     json-schema-traverse "^0.4.1"
     uri-js "^4.2.2"
 
-anilist-wrapper@^0.0.20:
-  version "0.0.20"
-  resolved "https://registry.yarnpkg.com/anilist-wrapper/-/anilist-wrapper-0.0.20.tgz#145e713066790a357235993ad34e238c3082a8b9"
-  integrity sha512-JGnFjrZgjWZVSbVpr/a2lo1eKRYRw2wilnHlTzcWsjS7J6jsSsd49C6y0X5JOxJOggFF/Y6vxanFtgt8oRaSlg==
+anilist-wrapper@^0.0.21:
+  version "0.0.21"
+  resolved "https://registry.yarnpkg.com/anilist-wrapper/-/anilist-wrapper-0.0.21.tgz#5d56c887b2d0e4553e27b5fbccd79062c40a305e"
+  integrity sha512-0sBs/TEr10MxvPZtWu5dCWSJt5b/LJNPFt0966rv6vg35P8Ehq/FQ8dQxWrQAyWZZmCtT9NpHnANajYu4KLrag==
   dependencies:
     axios "^0.21.1"
     jwt-decode "^3.1.2"
