@@ -25,6 +25,8 @@ export const UpdateEntry = ({ anime }) => {
     anime.media.episodes
   );
 
+  totalEpisodes =  totalEpisodes ? totalEpisodes : 0;
+
   var dropDownEpisodes = [];
 
   for (let i = 0; i <= totalEpisodes; i++) {

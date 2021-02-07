@@ -9,7 +9,7 @@ export const formatEpisodes = (anime) => {
   if (!anime.media.episodes || anime.media.status === MediaStatus.Releasing) {
     eps = "?";
   } else {
-    eps = anime.media.episodes; 
+    eps = anime.media.episodes;
   }
 
   const progress = anime.progress ? anime.progress : 0;
@@ -124,7 +124,11 @@ export async function getIdFromGogo(anime) {
 }
 
 export const totalEps = (nextAiringEpisode, episodes) =>
-  nextAiringEpisode ? nextAiringEpisode.episode - 1 : episodes;
+  nextAiringEpisode
+    ? nextAiringEpisode.episode - 1
+    : episodes
+    ? episodes
+    : null;
 
 export async function getEpisodeLinks(id, episode) {
   let links = [];

@@ -140,8 +140,7 @@ const AnimeDetails = ({ navigation, route }) => {
           }
           await getIdFromGogo(detailsResponse)
               .then((id) => {
-                console.log("id is: " + id);
-                if (id) setGogoId(id); //the id can be null.
+                if (id) setGogoId(id); //the id can be undefined.
                 setFetching(false);
               })
               .catch((err) => console.log(err));
