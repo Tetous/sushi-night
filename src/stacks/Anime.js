@@ -65,7 +65,11 @@ const EpisodeList = ({ from, to, gogoId, anime }) => {
             <View key={ep} style={{ padding: 4, alignSelf: "flex-start" }}>
               <Button
                 mode="outlined"
-                labelStyle={{ fontSize: 18 }}
+                labelStyle={{
+                  fontSize: 18,
+                  color: "#00adb5",
+                  fontWeight: "bold",
+                }}
                 onPress={() => {
                   navigation.navigate("WatchEpisode", {
                     anime,
@@ -139,11 +143,11 @@ const AnimeDetails = ({ navigation, route }) => {
             setCurrentTo(rs[0].to);
           }
           await getIdFromGogo(detailsResponse)
-              .then((id) => {
-                if (id) setGogoId(id); //the id can be undefined.
-                setFetching(false);
-              })
-              .catch((err) => console.log(err));
+            .then((id) => {
+              if (id) setGogoId(id); //the id can be undefined.
+              setFetching(false);
+            })
+            .catch((err) => console.log(err));
         })
         .catch((err) => console.log(err));
     })();
@@ -378,7 +382,14 @@ const AnimeDetails = ({ navigation, route }) => {
           <View>
             {gogoId ? (
               ranges.length ? (
-                <View style={{ flexDirection: "column" }}>
+                <View
+                  style={{
+                    flexDirection: "column",
+                    width: "80%",
+                    justifyContent: "center",
+                    alignSelf: "center",
+                  }}
+                >
                   <EpisodeList
                     from={currentFrom}
                     to={currentTo}
@@ -407,7 +418,8 @@ const AnimeDetails = ({ navigation, route }) => {
                               setCurrentFrom(range.from);
                               setCurrentTo(range.to);
                             }}
-                            textStyle={{ fontSize: 16 }}
+                            textStyle={{ fontSize: 16, fontWeight: "bold" }}
+                            style={{ backgroundColor: "#222831" }}
                           >
                             {range.from !== range.to
                               ? `${range.from} - ${range.to}`
@@ -670,8 +682,12 @@ class WatchEpisode extends React.Component {
                         ? this._changeOptionWeb()
                         : this._changeOptionMobile();
                     }}
-                    style={{ marginTop: 10 }}
-                    labelStyle={{ fontSize: 16, fontWeight: "bold" }}
+                    style={{ marginTop: 10, backgroundColor: "#222831" }}
+                    labelStyle={{
+                      fontSize: 16,
+                      fontWeight: "bold",
+                      color: "#eeeeee",
+                    }}
                   >
                     {option.quality}
                   </Button>
