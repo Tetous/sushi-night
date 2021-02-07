@@ -77,6 +77,13 @@ export const calcRanges = (anime) => {
     if (end >= totalEpisodes) {
       end = totalEpisodes;
     }
+
+    if (end >= totalEpisodes && base >= totalEpisodes) {
+      end = totalEpisodes;
+      base = totalEpisodes;
+      if (ranges[i - 1].to === end) break;
+    }
+
     ranges.push({
       from: base,
       to: end,
@@ -117,7 +124,7 @@ export async function getIdFromGogo(anime) {
   return idList;
 }
 
-const totalEps = (nextAiringEpisode, episodes) =>
+export const totalEps = (nextAiringEpisode, episodes) =>
   nextAiringEpisode ? nextAiringEpisode.episode - 1 : episodes;
 
 export async function getEpisodeLinks(id, episode) {
@@ -128,6 +135,6 @@ export async function getEpisodeLinks(id, episode) {
       links = res.data;
     })
     .catch((err) => console.log(err));
-    
+
   return links;
 }

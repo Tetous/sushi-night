@@ -77,7 +77,7 @@ const Feed = ({ navigation }) => {
   else if (fetching)
     return (
       <Center>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color="#00adb5" />
       </Center>
     );
   else
@@ -158,7 +158,7 @@ export const HomeStack = ({}) => {
           headerLeft: () => {
             if (fetching) {
               return (
-                <ActivityIndicator style={{ marginLeft: 8 }} size="large" />
+                <ActivityIndicator style={{ marginLeft: 8 }} size="large" color="#00adb5" />
               );
             } else if (error) {
               console.log(error);

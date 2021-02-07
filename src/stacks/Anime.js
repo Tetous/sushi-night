@@ -1,4 +1,7 @@
-import { createStackNavigator } from "@react-navigation/stack";
+import {
+  createStackNavigator,
+  HeaderBackButton,
+} from "@react-navigation/stack";
 import React, { useContext, useEffect, useState } from "react";
 import {
   Text,
@@ -21,11 +24,13 @@ import {
   calcRanges,
   getIdFromGogo,
   getEpisodeLinks,
+  totalEps,
 } from "../util";
-import { Video } from "expo-av";
 import { useNavigation } from "@react-navigation/native";
 import { AntDesign } from "@expo/vector-icons";
-import { useRef } from "react";
+import { Video } from "expo-av";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 const Stack = createStackNavigator();
 
 const EpisodeList = ({ from, to, gogoId, anime }) => {
@@ -86,6 +91,7 @@ const AnimeDetails = ({ navigation, route }) => {
   const [currentTo, setCurrentTo] = useState(0);
   const [ranges, setRanges] = useState([]);
   const [gogoId, setGogoId] = useState(null);
+  const [fetching, setFetching] = useState(true); //this is regarding gogoanime stuff
 
   useEffect(() => {
     anime.media.id = anime.mediaId;
@@ -98,6 +104,8 @@ const AnimeDetails = ({ navigation, route }) => {
             .replace(/<[^>]*>/g, "");
           setDetails(detailsResponse);
 
+          anime.media = detailsResponse;
+
           const rs = calcRanges(detailsResponse);
           setRanges(rs);
           setCurrentFrom(rs[0].from);
@@ -106,7 +114,8 @@ const AnimeDetails = ({ navigation, route }) => {
           await getIdFromGogo(detailsResponse)
             .then((id) => {
               console.log("id is: " + id);
-              setGogoId(id);
+              id && setGogoId(id); //the id can be null.
+              setFetching(false);
             })
             .catch((err) => console.log(err));
         })
@@ -117,7 +126,7 @@ const AnimeDetails = ({ navigation, route }) => {
   if (!details)
     return (
       <Center>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color="#00adb5" />
       </Center>
     );
 
@@ -309,48 +318,67 @@ const AnimeDetails = ({ navigation, route }) => {
       </View>
       <View style={{ marginTop: 5 }}>
         <View>
-          {ranges.length && gogoId ? (
-            <View style={{ flexDirection: "column" }}>
-              <EpisodeList
-                from={currentFrom}
-                to={currentTo}
-                gogoId={gogoId}
-                anime={details}
-              />
-              <View
-                style={{
-                  flexWrap: "wrap",
-                  alignSelf: "center",
-                  alignItems: "center",
-                  flexDirection: "row",
-                  justifyContent: "center",
-                  marginTop: 10,
-                }}
-              >
-                {ranges.map((range) => {
-                  return (
-                    <View
-                      key={range.from}
-                      style={{ padding: 4, alignSelf: "flex-start" }}
-                    >
-                      <Chip
-                        selectedColor="#00adb5"
-                        onPress={() => {
-                          setCurrentFrom(range.from);
-                          setCurrentTo(range.to);
-                        }}
-                        textStyle={{ fontSize: 16 }}
+          {gogoId ? (
+            ranges.length ? (
+              <View style={{ flexDirection: "column" }}>
+                <EpisodeList
+                  from={currentFrom}
+                  to={currentTo}
+                  gogoId={gogoId}
+                  anime={anime}
+                />
+                <View
+                  style={{
+                    flexWrap: "wrap",
+                    alignSelf: "center",
+                    alignItems: "center",
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    marginTop: 10,
+                  }}
+                >
+                  {ranges.map((range) => {
+                    return (
+                      <View
+                        key={range.from}
+                        style={{ padding: 4, alignSelf: "flex-start" }}
                       >
-                        {range.from !== range.to
-                          ? `${range.from} - ${range.to}`
-                          : `${range.from}`}
-                      </Chip>
-                    </View>
-                  );
-                })}
+                        <Chip
+                          selectedColor="#00adb5"
+                          onPress={() => {
+                            setCurrentFrom(range.from);
+                            setCurrentTo(range.to);
+                          }}
+                          textStyle={{ fontSize: 16 }}
+                        >
+                          {range.from !== range.to
+                            ? `${range.from} - ${range.to}`
+                            : `${range.from}`}
+                        </Chip>
+                      </View>
+                    );
+                  })}
+                </View>
               </View>
-            </View>
-          ) : null}
+            ) : (
+              <Center>
+                <Text style={{ color: "#393e46", fontSize: 16 }}>
+                  It seems that our provider doesn't have episodes for this
+                  anime yet.
+                </Text>
+              </Center>
+            )
+          ) : fetching ? (
+            <Center>
+              <ActivityIndicator size="large" color="#00adb5" />
+            </Center>
+          ) : (
+            <Center>
+              <Text style={{ color: "#393e46", fontSize: 16 }}>
+                Sorry, we couldn't find this anime ;(.
+              </Text>
+            </Center>
+          )}
         </View>
       </View>
     </ScrollView>
@@ -370,15 +398,13 @@ class WatchEpisode extends React.Component {
       gogoId: this.props.route.params.gogoId,
       ep: this.props.route.params.ep,
       loading: true,
+      progress: 0,
+      itemKey: `${this.props.route.params.anime.media.title.romaji}-${this.props.route.params.ep}`,
     };
 
     (async () => {
-      console.log(
-        `${this.state.gogoId} ${this.state.ep} ${this.state.anime.id}`
-      );
       await getEpisodeLinks(this.state.gogoId, this.state.ep).then(
         (linksResponse) => {
-          console.log(JSON.stringify(linksResponse));
           this.setState({
             ...this.state,
             links: linksResponse,
@@ -390,37 +416,83 @@ class WatchEpisode extends React.Component {
     })();
   }
 
+  _saveProgress = () => {
+    console.log("Im a function to save progress every 5 seconds.");
+    if (this._video) {
+      console.log("the video component ref exists.");
+      Platform.OS === "web"
+        ? this._saveProgressWeb()
+        : this._saveProgressMobile();
+    } else {
+      console.log("the video component ref doesnt exist.");
+    }
+  };
+
+  componentDidMount() {
+    AsyncStorage.getItem(this.state.itemKey).then((data) => {
+      data && this.setState({ ...this.state, progress: JSON.parse(data) });
+    });
+    this.timerInterval = setInterval(() => this._saveProgress(), 5000);
+  }
+
+  componentWillUnmount() {
+    AsyncStorage.setItem(this.state.itemKey, this.state.progress.toString());
+    clearInterval(this.timerInterval);
+  }
+
   _mountVideoWeb = (component) => {
     this._video = component;
-    this._video.src = this.state.option.link;
+    if (this._video) {
+      this._video.currentTime = this.state.progress;
+    }
   };
 
   _mountVideoMobile = (component) => {
     this._video = component;
-    this._changeOption();
+    console.log("ref was mounted");
+    if (this._video) {
+      this._changeOptionMobile();
+    }
   };
 
-  _changeOption() {
+  _changeOptionMobile = () => {
     if (this._video) {
       this._video.loadAsync({ uri: this.state.option.link });
     }
-  }
+    //this._video.setPositionAsync(this.state.progress);
+  };
 
-  _saveProgress() {
-    if (this._video){
-      console.log("progress " + this._video.currentTime);
+  _changeOptionWeb = () => {
+    this._video.currentTime = this.state.progress;
+  };
+
+  _saveProgressWeb = () => {
+    if (this._video.currentTime != 0) {
+      this.setState({
+        ...this.state,
+        progress: this._video.currentTime,
+      });
     }
-  }
+  };
+
+  _saveProgressMobile = () => {
+    // this._video.getStatusAsync().then((data) => {
+    //   console.log("mobile is saving progress " + data.positionMillis);
+    //   if (data.positionMillis !== 0) {
+    //     this.setState({ ...this.state, progress: data.positionMillis });
+    //   }
+    // });
+  };
 
   render() {
     //usar el cliente para actualizar la lista
     const { client } = this.context;
-
+    const { navigation } = this.props;
     if (this.state.loading) {
       return (
-        <View>
-          <ActivityIndicator size="large" />
-        </View>
+        <Center>
+          <ActivityIndicator size="large" color="#00adb5" />
+        </Center>
       );
     } else if (!this.state.links) {
       return (
@@ -430,7 +502,11 @@ class WatchEpisode extends React.Component {
               No fueron encontrados links para ese capitulo
             </Text>
           </View>
-          <ActivityIndicator size="large" style={{ alignSelf: "center" }} />
+          <ActivityIndicator
+            size="large"
+            style={{ alignSelf: "center" }}
+            color="#00adb5"
+          />
         </View>
       );
     } else if (!this.state.links.length) {
@@ -454,16 +530,17 @@ class WatchEpisode extends React.Component {
           {Platform.OS === "web" ? (
             <View>
               <video
+                key={this.state.videoKey}
                 ref={this._mountVideoWeb}
                 controls
                 height={500}
-                onTimeUpdate={this._saveProgress}
+                src={this.state.option.link}
               />
             </View>
           ) : (
             <Video
+              key={this.state.videoKey}
               ref={this._mountVideoMobile}
-              resizeMode="contain"
               useNativeControls={true}
               style={{ width: "90%", height: 300, alignSelf: "center" }}
             />
@@ -475,12 +552,40 @@ class WatchEpisode extends React.Component {
               marginTop: 8,
             }}
           >
-            <Button mode="outlined" style={{ left: 4, position: "absolute" }}>
-              <AntDesign name="banckward" size={24} color="white" />
-            </Button>
-            <Button mode="outlined" style={{ right: 4, position: "absolute" }}>
-              <AntDesign name="forward" size={24} color="white" />
-            </Button>
+            {this.state.ep < 2 ? null : (
+              <Button
+                mode="outlined"
+                style={{ left: 4, position: "absolute" }}
+                onPress={() => {
+                  navigation.push("WatchEpisode", {
+                    anime: this.state.anime,
+                    gogoId: this.state.gogoId,
+                    ep: this.state.ep - 1,
+                  });
+                }}
+              >
+                <AntDesign name="banckward" size={24} color="white" />
+              </Button>
+            )}
+            {this.state.ep <
+            totalEps(
+              this.state.anime.media.nextAiringEpisode,
+              this.state.anime.media.episodes
+            ) ? (
+              <Button
+                mode="outlined"
+                style={{ right: 4, position: "absolute" }}
+                onPress={() => {
+                  navigation.push("WatchEpisode", {
+                    anime: this.state.anime,
+                    gogoId: this.state.gogoId,
+                    ep: this.state.ep + 1,
+                  });
+                }}
+              >
+                <AntDesign name="forward" size={24} color="white" />
+              </Button>
+            ) : null}
           </View>
           <View style={{ flex: 1, flexDirection: "column", marginTop: 40 }}>
             <View
@@ -502,7 +607,9 @@ class WatchEpisode extends React.Component {
                         option: option,
                         videoKey: this.state.videoKey + 1,
                       });
-                      this._changeOption();
+                      Platform.OS === "web"
+                        ? this._changeOptionWeb()
+                        : this._changeOptionMobile();
                     }}
                     style={{ marginTop: 10 }}
                     labelStyle={{ fontSize: 16, fontWeight: "bold" }}
@@ -529,7 +636,20 @@ export const AnimeStack = ({}) => {
           headerShown: false,
         }}
       />
-      <Stack.Screen name="WatchEpisode" component={WatchEpisode} />
+      <Stack.Screen
+        name="WatchEpisode"
+        component={WatchEpisode}
+        options={({ navigation, route }) => ({
+          title: `${route.params.anime.media.title.userPreferred} - ${route.params.ep}`,
+          headerLeft: () => {
+            return (
+              <HeaderBackButton
+                onPress={() => navigation.navigate("AnimeDetails")}
+              />
+            );
+          },
+        })}
+      />
     </Stack.Navigator>
   );
 };
