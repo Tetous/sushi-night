@@ -104,6 +104,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#eeeeee",
     fontWeight: "bold",
-    alignSelf: "flex-start",
+    alignSelf: "center",
   },
 });
