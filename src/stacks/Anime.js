@@ -28,9 +28,9 @@ import {
 } from "../util";
 import { useNavigation } from "@react-navigation/native";
 import { AntDesign } from "@expo/vector-icons";
-import { Video } from "expo-av";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { UpdateEntry } from "../components/UpdateEntry";
+import WebView from "react-native-webview";
 
 const Stack = createStackNavigator();
 
@@ -232,6 +232,8 @@ const AnimeDetails = ({ navigation, route }) => {
                 style={{
                   alignSelf: "flex-end",
                   flexDirection: "column",
+                  alignContent: "flex-end",
+                  justifyContent: "flex-end",
                   flexShrink: 1,
                   marginLeft: 5,
                   marginTop: 5,
@@ -240,7 +242,9 @@ const AnimeDetails = ({ navigation, route }) => {
               >
                 <View
                   style={{
-                    alignSelf: "flex-end",
+                    alignSelf: "flex-start",
+                    alignContent: "flex-end",
+                    justifyContent: "flex-end",
                     flexDirection: "row",
                     flexShrink: 1,
                     flex: 1,
@@ -249,13 +253,16 @@ const AnimeDetails = ({ navigation, route }) => {
                   <Text
                     style={{
                       color: "white",
+                      alignSelf: "flex-end",
+                      textAlign: "left",
+                      fontSize: 16,
                     }}
                     numberOfLines={1}
                   >
                     {formatListStatus(anime.status) + formatEpisodes(anime)}
                   </Text>
                   <TouchableOpacity
-                    style={{ marginLeft: 5 }}
+                    style={{ marginLeft: 5, alignSelf: "flex-end" }}
                     onPress={() => setUpdatingEntry(true)}
                   >
                     <Badge
@@ -263,6 +270,7 @@ const AnimeDetails = ({ navigation, route }) => {
                         backgroundColor: "#00adb5",
                         color: "#eeeeee",
                         fontWeight: "bold",
+                        fontSize: 14,
                       }}
                     >
                       Update
@@ -414,7 +422,7 @@ const AnimeDetails = ({ navigation, route }) => {
                         >
                           <Chip
                             selectedColor="#00adb5"
-                            onPress={() => {
+                            onPress={async () => {
                               setCurrentFrom(range.from);
                               setCurrentTo(range.to);
                             }}
@@ -471,6 +479,7 @@ class WatchEpisode extends React.Component {
       loading: true,
       progress: 0,
       itemKey: `${this.props.route.params.anime.media.title.romaji}-${this.props.route.params.ep}`,
+      fakeProgress: 0,
     };
 
     (async () => {
@@ -487,72 +496,31 @@ class WatchEpisode extends React.Component {
     })();
   }
 
-  _saveProgress = () => {
-    console.log("Im a function to save progress every 5 seconds.");
-    if (this._video) {
-      console.log("the video component ref exists.");
-      Platform.OS === "web"
-        ? this._saveProgressWeb()
-        : this._saveProgressMobile();
-    } else {
-      console.log("the video component ref doesnt exist.");
+  _saveProgressWeb = () => {
+    if (this._videoWeb) {
+      if (Math.floor(this._videoWeb.currentTime) % 5 === 0) {
+        this._saveProgress(this._videoWeb.currentTime);
+      }
     }
   };
 
   componentDidMount() {
     AsyncStorage.getItem(this.state.itemKey).then((data) => {
-      data && this.setState({ ...this.state, progress: JSON.parse(data) });
+      const progress = JSON.parse(data);
+      data &&
+        this.setState({ ...this.state, progress, fakeProgress: progress });
     });
-    this.timerInterval = setInterval(() => this._saveProgress(), 5000);
   }
 
   componentWillUnmount() {
     AsyncStorage.setItem(this.state.itemKey, this.state.progress.toString());
-    clearInterval(this.timerInterval);
   }
 
-  _mountVideoWeb = (component) => {
-    this._video = component;
-    if (this._video) {
-      this._video.currentTime = this.state.progress;
-    }
-  };
-
-  _mountVideoMobile = (component) => {
-    this._video = component;
-    console.log("ref was mounted");
-    if (this._video) {
-      this._changeOptionMobile();
-    }
-  };
-
-  _changeOptionMobile = () => {
-    if (this._video) {
-      this._video.loadAsync({ uri: this.state.option.link });
-    }
-    //this._video.setPositionAsync(this.state.progress);
-  };
-
-  _changeOptionWeb = () => {
-    this._video.currentTime = this.state.progress;
-  };
-
-  _saveProgressWeb = () => {
-    if (this._video.currentTime != 0) {
-      this.setState({
-        ...this.state,
-        progress: this._video.currentTime,
-      });
-    }
-  };
-
-  _saveProgressMobile = () => {
-    // this._video.getStatusAsync().then((data) => {
-    //   console.log("mobile is saving progress " + data.positionMillis);
-    //   if (data.positionMillis !== 0) {
-    //     this.setState({ ...this.state, progress: data.positionMillis });
-    //   }
-    // });
+  _saveProgress = (time) => {
+    this.setState({
+      ...this.state,
+      progress: time,
+    });
   };
 
   render() {
@@ -601,20 +569,69 @@ class WatchEpisode extends React.Component {
           {Platform.OS === "web" ? (
             <View>
               <video
-                key={this.state.videoKey}
-                ref={this._mountVideoWeb}
                 controls
+                ref={(ref) => (this._videoWeb = ref)}
+                controlsList="nodownload"
                 height={500}
-                src={this.state.option.link}
+                onTimeUpdate={this._saveProgressWeb}
+                src={`${this.state.option.link}#t=${this.state.fakeProgress}`}
               />
             </View>
           ) : (
-            <Video
-              key={this.state.videoKey}
-              ref={this._mountVideoMobile}
-              useNativeControls={true}
-              style={{ width: "90%", height: 300, alignSelf: "center" }}
-            />
+            <WebView
+              allowsFullscreenVideo={true}
+              style={{
+                height: 100,
+                width: "100%",
+                resizeMode: "cover",
+                aspectRatio: 2,
+              }}
+              mixedContentMode="always"
+              injectedJavaScript={`const meta = document.createElement('meta'); meta.setAttribute('content', 'width=width, initial-scale=0.5, maximum-scale=0.5, user-scalable=2.0'); meta.setAttribute('name', 'viewport'); document.getElementsByTagName('head')[0].appendChild(meta);`}
+              onMessage={(message) =>
+                this._saveProgress(message.nativeEvent.data)
+              }
+              androidHardwareAccelerationDisabled={false}
+              javaScriptEnabled={true}
+              scalesPageToFit={false}
+              domStorageEnabled={true}
+              source={{
+                html: `
+                <html>
+                  <body>
+                    <video
+                      id="video" 
+                      controls
+                      controlsList="nodownload" 
+                      src="${this.state.option.link}#t=${this.state.fakeProgress}"
+                      />  
+                  </body>
+                </html>
+                <script>
+                var vid = document.getElementById("video");
+                
+                vid.ontimeupdate = function () {
+                  if (Math.floor(vid.currentTime) % 5 === 0){
+                    window.ReactNativeWebView.postMessage(vid.currentTime.toString());
+                  }
+                };
+
+                </script>
+                <style>
+                video{
+                  position: fixed;
+                  top: 0;
+                  left: 0;
+                  bottom: 0;
+                  right: 0;
+                  max-width: 75%;
+                  height: 100%;
+                  object-fit: cover;
+                }
+                </style>
+                `,
+              }}
+            ></WebView>
           )}
           <View
             style={{
@@ -677,10 +694,8 @@ class WatchEpisode extends React.Component {
                         ...this.state,
                         option: option,
                         videoKey: this.state.videoKey + 1,
+                        fakeProgress: this.state.progress,
                       });
-                      Platform.OS === "web"
-                        ? this._changeOptionWeb()
-                        : this._changeOptionMobile();
                     }}
                     style={{ marginTop: 10, backgroundColor: "#222831" }}
                     labelStyle={{

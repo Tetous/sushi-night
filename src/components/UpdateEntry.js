@@ -42,11 +42,12 @@ export const UpdateEntry = ({ anime }) => {
         flexDirection: "column",
         backgroundColor: "#222831",
         alignSelf: "center",
-        width: "50%",
-        padding:10
+        width: Platform.OS === "web" ? "50%" : "100%",
+        padding:10,
+        height:"50%",
       }}
     >
-      <View style={{ flexDirection: "row",zIndex:6 }}>
+      <View style={{flexDirection:"row"}}>
         <View style={{ flex: 1, marginLeft: 5 }}>
           <Text
             style={{
@@ -67,7 +68,7 @@ export const UpdateEntry = ({ anime }) => {
               { label: "Dropped", value: MediaListStatus.Dropped },
             ]}
             defaultValue={status}
-            containerStyle={{ height: 40 }}
+            containerStyle={{ height: 50 }}
             itemStyle={{
               justifyContent: "flex-start",
             }}
@@ -109,7 +110,7 @@ export const UpdateEntry = ({ anime }) => {
               { label: "10", value: 10 },
             ]}
             defaultValue={score}
-            containerStyle={{ height: 40 }}
+            containerStyle={{ height: 50 }}
             itemStyle={{
               justifyContent: "flex-start",
             }}
@@ -134,12 +135,12 @@ export const UpdateEntry = ({ anime }) => {
               marginBottom: 4,
             }}
           >
-            Episode Progress
+            Progress
           </Text>
           <DropDownPicker
             items={dropDownEpisodes}
             defaultValue={progress}
-            containerStyle={{ height: 40 }}
+            containerStyle={{ height: 50 }}
             itemStyle={{
               justifyContent: "flex-start",
             }}
@@ -152,6 +153,7 @@ export const UpdateEntry = ({ anime }) => {
               borderColor: null,
               width: "100%",
               marginBottom: 4,
+              zIndex:7
             }}
           />
         </View>
@@ -166,6 +168,7 @@ export const UpdateEntry = ({ anime }) => {
           justifyContent: "flex-end",
           right: 0,
           padding: 10,
+          zIndex:1
         }}
       >
         <TouchableOpacity>
