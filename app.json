@@ -1,13 +1,16 @@
 {
-  "name": "sushi-night",
-  "displayName": "sushi-night",
+  "name": "Sushi Night",
+  "displayName": "Sushi Night",
   "expo": {
-    "name": "sushi-night",
+    "icon": "src/static/logo.png",
+    "name": "Sushi Night",
     "slug": "sushinight",
     "scheme": "sushinight",
     "version": "1.0.0",
-    "assetBundlePatterns": [
-      "**/*"
-    ]
+    "assetBundlePatterns": ["**/*"],
+    "android": {
+      "package": "com.system32uwu.sushinight",
+      "versionCode": 1
+    }
   }
 }
