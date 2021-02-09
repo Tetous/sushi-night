@@ -2,15 +2,20 @@
   "name": "Sushi Night",
   "displayName": "Sushi Night",
   "expo": {
-    "icon": "src/static/logo.png",
+    "icon": "./assets/logo.png",
     "name": "Sushi Night",
     "slug": "sushinight",
     "scheme": "sushinight",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "assetBundlePatterns": ["**/*"],
+    "backgroundColor" : "#000000",
     "android": {
       "package": "com.system32uwu.sushinight",
-      "versionCode": 1
+      "versionCode": "1.1.0"
+    },
+    "splash":{
+      "image" : "./assets/splash.png",
+      "backgroundColor" : "#000000"
     }
   }
 }

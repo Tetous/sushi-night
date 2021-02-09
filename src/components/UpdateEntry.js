@@ -25,7 +25,7 @@ export const UpdateEntry = ({ anime }) => {
     anime.media.episodes
   );
 
-  totalEpisodes =  totalEpisodes ? totalEpisodes : 0;
+  totalEpisodes = totalEpisodes ? totalEpisodes : 0;
 
   var dropDownEpisodes = [];
 
@@ -39,15 +39,62 @@ export const UpdateEntry = ({ anime }) => {
   return (
     <View
       style={{
-        flexDirection: "column",
         backgroundColor: "#222831",
         alignSelf: "center",
-        width: Platform.OS === "web" ? "50%" : "100%",
-        padding:10,
-        height:"50%",
+        width: Platform.OS === "web" ? "80%" : "100%",
+        padding: 20,
+        height: Platform.OS === "web" ? "100%" : "50%",
       }}
     >
-      <View style={{flexDirection:"row"}}>
+      <View
+        style={{
+          flexDirection: "row",
+          right: 0,
+          left:0,
+          alignItems:"flex-start",
+          justifyContent:"space-between"
+        }}
+      >
+        <Text
+          style={{
+            color: "white",
+            fontSize: 28,
+            fontWeight: "bold",
+            left: 0,
+            alignSelf: "flex-start",
+          }}
+        >
+          {anime.media.title.userPreferred}
+        </Text>
+        <View style={{alignSelf: "flex-end", alignContent:"flex-end", flexDirection:"row"}}>
+          <TouchableOpacity>
+            <View
+              style={{
+                backgroundColor: "#f14e4e",
+                padding: 10,
+                marginRight: 5,
+                alignSelf: "flex-end",
+                width: "100%",
+              }}
+            >
+              <Text style={{ color: "white", fontSize: 16 }}>Delete</Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <View
+              style={{
+                backgroundColor: "#338ef8",
+                padding: 10,
+                alignSelf: "flex-end",
+                width: "100%",
+              }}
+            >
+              <Text style={{ color: "white", fontSize: 16 }}>Save</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </View>
+      <View style={{ flexDirection: "row" }}>
         <View style={{ flex: 1, marginLeft: 5 }}>
           <Text
             style={{
@@ -153,47 +200,9 @@ export const UpdateEntry = ({ anime }) => {
               borderColor: null,
               width: "100%",
               marginBottom: 4,
-              zIndex:7
             }}
           />
         </View>
-      </View>
-      <View
-        style={{
-          flex: 1,
-          marginLeft: 5,
-          flexDirection: "row",
-          alignSelf: "flex-end",
-          alignContent: "flex-end",
-          justifyContent: "flex-end",
-          right: 0,
-          padding: 10,
-          zIndex:1
-        }}
-      >
-        <TouchableOpacity>
-          <View
-            style={{
-              alignItems: "center",
-              backgroundColor: "#f14e4e",
-              padding: 10,
-              marginRight:5
-            }}
-          >
-            <Text style={{ color: "white", fontSize: 16 }}>Delete</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <View
-            style={{
-              alignItems: "center",
-              backgroundColor: "#338ef8",
-              padding: 10,
-            }}
-          >
-            <Text style={{ color: "white", fontSize: 16 }}>Save</Text>
-          </View>
-        </TouchableOpacity>
       </View>
     </View>
   );
