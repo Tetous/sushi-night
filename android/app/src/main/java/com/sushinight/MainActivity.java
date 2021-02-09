@@ -1,4 +1,4 @@
-package com.sushinight;
+package com.system32uwu.sushinight;
 
 import android.os.Bundle;
 

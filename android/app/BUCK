@@ -35,12 +35,12 @@ android_library(
 
 android_build_config(
     name = "build_config",
-    package = "com.sushinight",
+    package = "com.system32uwu.sushinight",
 )
 
 android_resource(
     name = "res",
-    package = "com.sushinight",
+    package = "com.system32uwu.sushinight",
     res = "src/main/res",
 )
 

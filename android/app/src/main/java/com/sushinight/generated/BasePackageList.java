@@ -1,4 +1,4 @@
-package com.sushinight.generated;
+package com.system32uwu.sushinight.generated;
 
 import java.util.Arrays;
 import java.util.List;

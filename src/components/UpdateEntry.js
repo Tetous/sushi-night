@@ -41,67 +41,30 @@ export const UpdateEntry = ({ anime }) => {
       style={{
         backgroundColor: "#222831",
         alignSelf: "center",
-        width: Platform.OS === "web" ? "80%" : "100%",
-        padding: 20,
-        height: Platform.OS === "web" ? "100%" : "50%",
+        width: Platform.OS === "web" ? "80%" : "90%",
+        padding: 12,
+        height: Platform.OS === "web" ? "100%" : "60%",
+        zIndex:10
       }}
     >
       <View
         style={{
-          flexDirection: "row",
           right: 0,
-          left:0,
-          alignItems:"flex-start",
-          justifyContent:"space-between"
+          left: 0,
+          alignItems: "flex-start",
+          justifyContent: "space-between",
         }}
       >
-        <Text
-          style={{
-            color: "white",
-            fontSize: 28,
-            fontWeight: "bold",
-            left: 0,
-            alignSelf: "flex-start",
-          }}
-        >
-          {anime.media.title.userPreferred}
-        </Text>
-        <View style={{alignSelf: "flex-end", alignContent:"flex-end", flexDirection:"row"}}>
-          <TouchableOpacity>
-            <View
-              style={{
-                backgroundColor: "#f14e4e",
-                padding: 10,
-                marginRight: 5,
-                alignSelf: "flex-end",
-                width: "100%",
-              }}
-            >
-              <Text style={{ color: "white", fontSize: 16 }}>Delete</Text>
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <View
-              style={{
-                backgroundColor: "#338ef8",
-                padding: 10,
-                alignSelf: "flex-end",
-                width: "100%",
-              }}
-            >
-              <Text style={{ color: "white", fontSize: 16 }}>Save</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
       </View>
-      <View style={{ flexDirection: "row" }}>
-        <View style={{ flex: 1, marginLeft: 5 }}>
+      <View style={{ flexDirection: "row", marginTop: 15, width: "100%" }}>
+        <View style={{ flex: 1, left: 0, width: "100%" }}>
           <Text
             style={{
               color: "white",
               fontSize: 16,
               fontWeight: "bold",
               marginBottom: 4,
+              width: "100%",
             }}
           >
             Status
@@ -115,19 +78,21 @@ export const UpdateEntry = ({ anime }) => {
               { label: "Dropped", value: MediaListStatus.Dropped },
             ]}
             defaultValue={status}
-            containerStyle={{ height: 50 }}
+            containerStyle={{ height: 50, width: "100%" }}
             itemStyle={{
               justifyContent: "flex-start",
             }}
             activeLabelStyle={{ color: "#eeeeee" }}
-            labelStyle={{ color: "#00adb5", fontSize: 16 }}
-            dropDownStyle={{ backgroundColor: "#393e46", borderColor: null }}
+            zIndex={7}
+            labelStyle={{ color: "#00adb5", fontSize: 14 }}
+            dropDownStyle={{ backgroundColor: "#393e46", borderColor: null, height:130 }}
             onChangeItem={(item) => setStatus(item.value)}
             style={{
               backgroundColor: "#222831",
               borderColor: null,
               width: "100%",
               marginBottom: 4,
+              left: 0,
             }}
           />
         </View>
@@ -156,6 +121,7 @@ export const UpdateEntry = ({ anime }) => {
               { label: "9", value: 9 },
               { label: "10", value: 10 },
             ]}
+            zIndex={7}
             defaultValue={score}
             containerStyle={{ height: 50 }}
             itemStyle={{
@@ -163,7 +129,7 @@ export const UpdateEntry = ({ anime }) => {
             }}
             activeLabelStyle={{ color: "#eeeeee" }}
             labelStyle={{ color: "#00adb5", fontSize: 16 }}
-            dropDownStyle={{ backgroundColor: "#393e46", borderColor: null }}
+            dropDownStyle={{ backgroundColor: "#393e46", borderColor: null, height:130 }}
             onChangeItem={(item) => setScore(item.value)}
             style={{
               backgroundColor: "#222831",
@@ -191,9 +157,10 @@ export const UpdateEntry = ({ anime }) => {
             itemStyle={{
               justifyContent: "flex-start",
             }}
+            zIndex={7}
             activeLabelStyle={{ color: "#eeeeee" }}
             labelStyle={{ color: "#00adb5", fontSize: 16 }}
-            dropDownStyle={{ backgroundColor: "#393e46", borderColor: null }}
+            dropDownStyle={{ backgroundColor: "#393e46", borderColor: null, height:130 }}
             onChangeItem={(item) => setProgress(item.value)}
             style={{
               backgroundColor: "#222831",
@@ -203,6 +170,33 @@ export const UpdateEntry = ({ anime }) => {
             }}
           />
         </View>
+      </View>
+      <View style={{flexDirection:"row", alignSelf:"flex-end", alignItems:"flex-end", bottom:10, right:12, position:"absolute"}}>
+        <TouchableOpacity>
+          <View
+            style={{
+              backgroundColor: "#f14e4e",
+              padding: 10,
+              marginRight: 5,
+              alignSelf: "flex-end",
+              width: "100%",
+            }}
+          >
+            <Text style={{ color: "white", fontSize: 20 }}>Delete</Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity>
+          <View
+            style={{
+              backgroundColor: "#338ef8",
+              padding: 10,
+              alignSelf: "flex-end",
+              width: "100%",
+            }}
+          >
+            <Text style={{ color: "white", fontSize: 20 }}>Save</Text>
+          </View>
+        </TouchableOpacity>
       </View>
     </View>
   );
